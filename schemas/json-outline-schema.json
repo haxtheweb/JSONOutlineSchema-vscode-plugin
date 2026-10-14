@@ -1,0 +1,285 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/haxtheweb/JSONOutlineSchema-vscode-plugin/schemas/json-outline-schema.json",
+  "title": "JSON Outline Schema",
+  "description": "An outline of content items (HAXcms site.json). Mirrors JSONOutlineSchema / JSONOutlineSchemaItem in haxcms-nodejs and haxcms-php. HAXcms has written some values as strings over time (\"1\", \"\", \"1697042706\"), so numbers and booleans also accept their string forms.",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "description": "Unique id of the outline (a UUID in HAXcms)." },
+    "title": { "type": "string", "description": "Title of the site / outline." },
+    "author": { "type": "string", "description": "Author of the outline." },
+    "description": { "type": "string", "description": "Description of the site / outline." },
+    "license": {
+      "type": "string",
+      "default": "by-sa",
+      "description": "License of the content. HAXcms uses Creative Commons short names.",
+      "examples": ["by", "by-sa", "by-nd", "by-nc", "by-nc-sa", "by-nc-nd", "cc0", "mit", "apache-2.0", "all-rights-reserved"]
+    },
+    "location": { "type": ["string", "null"], "description": "Where the outline itself lives (set on site listings)." },
+    "slug": { "type": ["string", "null"] },
+    "metadata": { "$ref": "#/definitions/siteMetadata" },
+    "items": {
+      "type": "array",
+      "description": "Every item in the outline, flat. Hierarchy comes from parent; sibling position from order.",
+      "items": { "$ref": "#/definitions/item" }
+    }
+  },
+  "additionalProperties": true,
+  "defaultSnippets": [
+    {
+      "label": "New outline",
+      "body": {
+        "id": "${1:site-uuid}",
+        "title": "${2:New site}",
+        "author": "",
+        "description": "",
+        "license": "by-sa",
+        "metadata": {
+          "author": { "image": "", "name": "", "email": "", "socialLink": "" },
+          "site": { "name": "${3:new-site}", "logo": "", "lang": "en", "settings": { "pathauto": true, "publishPagesOn": true } },
+          "theme": { "element": "${4:clean-one}", "variables": {}, "regions": {} },
+          "node": { "fields": {} }
+        },
+        "items": [
+          {
+            "id": "item-${5:uuid}",
+            "indent": 0,
+            "location": "pages/${6:welcome}/index.html",
+            "slug": "${6:welcome}",
+            "order": 0,
+            "parent": null,
+            "title": "${7:Welcome}",
+            "description": "",
+            "metadata": { "published": true, "hideInMenu": false }
+          }
+        ]
+      }
+    }
+  ],
+  "definitions": {
+    "looseInt": {
+      "description": "Integer (string digits accepted).",
+      "oneOf": [
+        { "type": "integer" },
+        { "type": "string", "pattern": "^-?[0-9]+$" }
+      ]
+    },
+    "timestamp": {
+      "description": "Unix timestamp in seconds (string digits accepted).",
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "string", "pattern": "^[0-9]*$" }
+      ]
+    },
+    "looseBool": {
+      "description": "Boolean. Legacy files use \"1\" / \"\" / \"0\" / \"true\" / \"false\".",
+      "oneOf": [
+        { "type": "boolean" },
+        { "type": "integer", "enum": [0, 1] },
+        { "type": "string", "enum": ["", "0", "1", "true", "false"] }
+      ]
+    },
+    "itemId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "An item id (HAXcms: \"item-\" + UUID)."
+    },
+    "item": {
+      "type": "object",
+      "description": "One entry in the outline.",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "$ref": "#/definitions/itemId" },
+        "title": { "type": "string", "description": "Title shown in menus and the page." },
+        "description": { "type": "string", "description": "Summary, used for SEO and cards." },
+        "location": { "type": "string", "description": "Path to the content, relative to site.json (HAXcms: pages/<slug>/index.html)." },
+        "slug": { "type": "string", "description": "URL path of the item, relative to the site root (may contain / for nested paths)." },
+        "parent": {
+          "oneOf": [{ "$ref": "#/definitions/itemId" }, { "type": "null" }, { "type": "string", "maxLength": 0 }],
+          "description": "id of the parent item; null or \"\" for top level."
+        },
+        "order": { "$ref": "#/definitions/looseInt", "description": "Position among siblings (0-based)." },
+        "indent": { "$ref": "#/definitions/looseInt", "description": "Depth in the tree; should equal the number of ancestors." },
+        "metadata": { "$ref": "#/definitions/itemMetadata" }
+      },
+      "additionalProperties": true,
+      "defaultSnippets": [
+        {
+          "label": "New item",
+          "body": {
+            "id": "item-${1:uuid}",
+            "indent": 0,
+            "location": "pages/${2:slug}/index.html",
+            "slug": "${2:slug}",
+            "order": 0,
+            "parent": null,
+            "title": "${3:Title}",
+            "description": "",
+            "metadata": { "published": true, "hideInMenu": false }
+          }
+        }
+      ]
+    },
+    "itemMetadata": {
+      "type": "object",
+      "description": "Per-item settings maintained by HAXcms.",
+      "properties": {
+        "created": { "$ref": "#/definitions/timestamp" },
+        "updated": { "$ref": "#/definitions/timestamp" },
+        "published": { "$ref": "#/definitions/looseBool", "description": "false hides the page from the published site." },
+        "hideInMenu": { "$ref": "#/definitions/looseBool", "description": "Keep the page out of menus." },
+        "locked": { "$ref": "#/definitions/looseBool", "description": "Prevent editing." },
+        "status": { "type": "string" },
+        "readtime": { "$ref": "#/definitions/looseInt", "description": "Estimated reading time in minutes (computed)." },
+        "tags": {
+          "description": "Tags, comma separated.",
+          "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+        },
+        "icon": { "type": "string", "description": "Icon as iconset:name, e.g. icons:accessibility." },
+        "image": { "type": "string", "description": "Featured image path or URL." },
+        "accentColor": { "type": "string", "description": "Accent color name." },
+        "pageType": { "type": "string", "description": "Kind of page (e.g. a course or glossary page type)." },
+        "linkUrl": { "type": "string", "description": "Make the menu item link elsewhere." },
+        "linkTarget": { "type": "string", "examples": ["_self", "_blank"] },
+        "relatedItems": {
+          "description": "Related item ids, comma separated.",
+          "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+        },
+        "overridePathauto": { "$ref": "#/definitions/looseBool", "description": "Keep this slug even when the site uses pathauto." },
+        "region": { "type": "string", "description": "Theme region this item is placed in." },
+        "theme": { "$ref": "#/definitions/theme", "description": "Per-page theme override." },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "Images found in the page (computed)." },
+        "videos": { "type": "array", "items": { "type": "string" }, "description": "Videos found in the page (computed)." },
+        "files": { "type": "array", "description": "Files uploaded to this page (computed)." },
+        "contentDetails": { "type": "object", "description": "Content statistics (computed)." },
+        "fields": { "type": "object", "description": "Values for custom node fields." }
+      },
+      "additionalProperties": true
+    },
+    "siteMetadata": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "image": { "type": "string" },
+            "socialLink": { "type": "string" },
+            "website": { "type": "string" },
+            "phone": { "type": "string" },
+            "location": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "site": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "Machine name of the site (its folder name in HAXcms)." },
+            "domain": { "type": "string" },
+            "logo": { "type": "string" },
+            "lang": { "type": "string", "description": "Default language (BCP 47).", "examples": ["en", "es", "fr", "de", "zh", "ja"] },
+            "license": { "type": "string" },
+            "tags": { "type": "string" },
+            "created": { "$ref": "#/definitions/timestamp" },
+            "updated": { "$ref": "#/definitions/timestamp" },
+            "version": { "type": "string", "description": "HAXcms version that last saved the site." },
+            "homePageId": { "type": ["string", "null"], "description": "id of the item to use as the home page." },
+            "git": { "type": "object" },
+            "static": { "type": "object" },
+            "settings": {
+              "type": "object",
+              "properties": {
+                "lang": { "type": "string" },
+                "pathauto": { "$ref": "#/definitions/looseBool", "description": "Generate slugs from titles and the outline." },
+                "publishPagesOn": { "$ref": "#/definitions/looseBool", "description": "New pages are published by default." },
+                "canonical": { "$ref": "#/definitions/looseBool", "description": "Emit canonical URLs." },
+                "private": { "$ref": "#/definitions/looseBool" },
+                "sw": { "$ref": "#/definitions/looseBool", "description": "Enable the service worker." },
+                "forceUpgrade": { "$ref": "#/definitions/looseBool" },
+                "gaID": { "type": "string", "description": "Google Analytics id." }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "theme": { "$ref": "#/definitions/theme" },
+        "node": {
+          "type": "object",
+          "properties": {
+            "fields": { "type": "object", "description": "Custom fields for pages, as HAXSchema settings (configure / advanced)." }
+          }
+        },
+        "platform": {
+          "type": "object",
+          "description": "What editing features this site exposes.",
+          "properties": {
+            "audience": { "type": "string", "examples": ["novice", "expert"] },
+            "features": { "type": "object", "additionalProperties": { "type": "boolean" } },
+            "allowedBlocks": { "type": "array", "items": { "type": "string" }, "description": "Tag names allowed in the editor; empty allows all." }
+          },
+          "additionalProperties": true
+        },
+        "build": { "type": "object", "description": "How the site was created (version, structure, type)." }
+      },
+      "additionalProperties": true
+    },
+    "theme": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "type": "string",
+          "description": "Theme element tag.",
+          "examples": [
+            "clean-one", "clean-two", "clean-portfolio-theme", "polaris-flex-theme", "polaris-flex-sidebar",
+            "polaris-invent-theme", "polaris-theme", "journey-theme", "journey-sidebar-theme", "journey-topbar-theme",
+            "learn-two-theme", "haxor-slevin", "simple-blog", "outline-player", "bootstrap-theme", "chamfer-theme",
+            "collections-theme", "ddd-brochure-theme", "glossy-portfolio-theme", "haxcms-blank-theme", "haxma-theme",
+            "link-card-theme", "resume-theme", "spacebook-theme", "training-theme", "twenty-six-theme", "app-hax-theme"
+          ]
+        },
+        "path": { "type": "string", "description": "Module that defines the theme element." },
+        "name": { "type": "string" },
+        "machineName": { "type": "string" },
+        "key": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "styleGuide": { "type": ["object", "string", "boolean"] },
+        "variables": {
+          "type": ["object", "null"],
+          "properties": {
+            "image": { "type": "string" },
+            "imageAlt": { "type": "string" },
+            "imageLink": { "type": "string" },
+            "hexCode": { "type": "string", "pattern": "^(#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8}))?$" },
+            "cssVariable": { "type": "string" },
+            "icon": { "type": "string" },
+            "palette": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "regions": {
+          "type": "object",
+          "description": "Theme regions mapped to the item ids rendered in them.",
+          "properties": {
+            "header": { "$ref": "#/definitions/idList" },
+            "sidebarFirst": { "$ref": "#/definitions/idList" },
+            "sidebarSecond": { "$ref": "#/definitions/idList" },
+            "contentTop": { "$ref": "#/definitions/idList" },
+            "contentBottom": { "$ref": "#/definitions/idList" },
+            "footerPrimary": { "$ref": "#/definitions/idList" },
+            "footerSecondary": { "$ref": "#/definitions/idList" }
+          },
+          "additionalProperties": { "$ref": "#/definitions/idList" }
+        },
+        "fields": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "idList": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

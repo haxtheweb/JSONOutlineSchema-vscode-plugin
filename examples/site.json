@@ -1,0 +1,58 @@
+{
+  "id": "7a8b9c0d-1e2f-4a5b-8c6d-7e8f9a0b1c2d",
+  "title": "Example site",
+  "author": "HAXTheWeb",
+  "description": "A small outline to try the extension on. It has a few deliberate mistakes.",
+  "license": "by-sa",
+  "metadata": {
+    "author": { "image": "", "name": "HAXTheWeb", "email": "", "socialLink": "" },
+    "site": {
+      "name": "example-site",
+      "logo": "",
+      "lang": "en",
+      "homePageId": "item-welcome",
+      "settings": { "pathauto": false, "publishPagesOn": true }
+    },
+    "theme": {
+      "element": "clean-one",
+      "variables": { "hexCode": "#005fa9", "icon": "icons:book" },
+      "regions": { "footerPrimary": ["item-about"] }
+    },
+    "node": { "fields": {} }
+  },
+  "items": [
+    {
+      "id": "item-welcome",
+      "indent": 0,
+      "location": "pages/welcome/index.html",
+      "slug": "welcome",
+      "order": 0,
+      "parent": null,
+      "title": "Welcome",
+      "description": "Start here.",
+      "metadata": { "published": true, "hideInMenu": false, "relatedItems": "item-getting-started" }
+    },
+    {
+      "id": "item-getting-started",
+      "indent": 1,
+      "location": "pages/getting-started/index.html",
+      "slug": "welcome/getting-started",
+      "order": 0,
+      "parent": "item-welcome",
+      "title": "Getting started",
+      "description": "",
+      "metadata": { "published": true, "tags": "intro, setup" }
+    },
+    {
+      "id": "item-next-steps",
+      "indent": 0,
+      "location": "pages/next-steps/index.html",
+      "slug": "welcome/getting-started",
+      "order": 1,
+      "parent": "item-welcome",
+      "title": "Next steps (duplicate slug, wrong indent, missing page)",
+      "description": "",
+      "metadata": { "published": "1" }
+    }
+  ]
+}

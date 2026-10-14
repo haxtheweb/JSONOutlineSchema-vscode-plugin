@@ -1,0 +1,125 @@
+{
+  "name": "json-outline-schema",
+  "displayName": "JSON Outline Schema",
+  "description": "Validation, autocomplete and navigation for JSON Outline Schema files, including HAXcms site.json",
+  "version": "1.0.0",
+  "publisher": "haxtheweb",
+  "license": "Apache-2.0",
+  "icon": "images/hax-icon.png",
+  "homepage": "https://haxtheweb.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haxtheweb/JSONOutlineSchema-vscode-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/haxtheweb/issues/issues"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Linters",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "hax",
+    "haxcms",
+    "haxtheweb",
+    "json outline schema",
+    "site.json",
+    "outline"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/site.json",
+    "workspaceContains:**/*.jos.json",
+    "onLanguage:json"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "site.json",
+          "*.jos.json"
+        ],
+        "url": "./schemas/json-outline-schema.json"
+      }
+    ],
+    "configuration": {
+      "title": "JSON Outline Schema",
+      "properties": {
+        "jsonOutlineSchema.semanticValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check outline integrity (duplicate ids and slugs, unknown parents, cycles, indent) on top of JSON schema validation."
+        },
+        "jsonOutlineSchema.checkLocations": {
+          "type": "string",
+          "enum": ["auto", "always", "never"],
+          "enumDescriptions": [
+            "Only when a pages/ folder sits next to the outline (a full HAXcms site).",
+            "Always report items whose location file is missing.",
+            "Never check locations."
+          ],
+          "default": "auto",
+          "description": "Report items whose \"location\" file doesn't exist."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "jsonOutlineSchema.goToItem",
+        "title": "Go to Item…",
+        "category": "JSON Outline Schema"
+      },
+      {
+        "command": "jsonOutlineSchema.validateFile",
+        "title": "Validate File",
+        "category": "JSON Outline Schema"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "jsonOutlineSchema.goToItem",
+          "when": "resourceFilename == site.json || resourceFilename =~ /\\.jos\\.json$/"
+        },
+        {
+          "command": "jsonOutlineSchema.validateFile",
+          "when": "resourceFilename == site.json || resourceFilename =~ /\\.jos\\.json$/"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node18 --external:vscode --main-fields=module,main --outfile=dist/extension.js --minify",
+    "watch": "npm run build -- --sourcemap --watch",
+    "typecheck": "tsc -p . --noEmit",
+    "lint": "eslint src test --ext ts",
+    "pretest": "npm run build && tsc -p tsconfig.test.json",
+    "test": "mocha --ui tdd \"out/test/**/*.test.js\"",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.17.0",
+    "@types/vscode": "~1.82.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vscode/vsce": "^3.2.2",
+    "ajv": "^8.17.1",
+    "esbuild": "^0.25.0",
+    "eslint": "^8.57.1",
+    "glob": "^11.0.3",
+    "mocha": "^11.7.2",
+    "ovsx": "^0.10.1",
+    "typescript": "^5.6.3",
+    "vscode-json-languageservice": "^5.7.2"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1"
+  }
+}

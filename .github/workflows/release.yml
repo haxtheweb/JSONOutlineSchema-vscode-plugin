@@ -1,0 +1,110 @@
+name: Release
+
+# Publishes the extension whenever main carries a version that hasn't been
+# released yet. Day to day: bump "version" in package.json (and CHANGELOG.md)
+# in your PR; merging it releases. Or run this workflow by hand and pick a
+# bump, and it will commit the new version to main for you.
+#
+# Secrets (Settings -> Secrets and variables -> Actions). A missing secret
+# skips that registry instead of failing the run.
+#   VSCE_PAT  Azure DevOps personal access token with Marketplace > Manage scope,
+#             for the "haxtheweb" publisher on marketplace.visualstudio.com.
+#   OVSX_PAT  Access token from open-vsx.org (used by VSCodium, Cursor, Gitpod, …).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump to commit before releasing ("none" releases the current version if unreleased)
+        type: choice
+        options: [none, patch, minor, major]
+        default: none
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Bump version
+        if: github.event_name == 'workflow_dispatch' && inputs.bump != 'none'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version "${{ inputs.bump }}" --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          git commit -am "chore: release v$VERSION"
+          git push origin HEAD:main
+
+      - name: Decide whether to release
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "v$VERSION is already released; nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        if: steps.version.outputs.release == 'true'
+        run: npm run check
+
+      - name: Package
+        if: steps.version.outputs.release == 'true'
+        run: npm run package -- --out "${{ github.event.repository.name }}-${{ steps.version.outputs.version }}.vsix"
+
+      - name: GitHub release
+        if: steps.version.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          gh release create "v$VERSION" *.vsix \
+            --target "$(git rev-parse HEAD)" \
+            --title "v$VERSION" \
+            --notes "$(awk -v v="## $VERSION" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md)"
+
+      - name: Publish to VS Code Marketplace
+        if: steps.version.outputs.release == 'true' && env.VSCE_PAT != ''
+        run: npx vsce publish --packagePath *.vsix
+
+      - name: Publish to Open VSX
+        if: steps.version.outputs.release == 'true' && env.OVSX_PAT != ''
+        run: |
+          PUBLISHER=$(node -p "require('./package.json').publisher")
+          npx ovsx create-namespace "$PUBLISHER" || true
+          npx ovsx publish *.vsix
+
+      - name: Summary
+        if: steps.version.outputs.release == 'true'
+        run: |
+          {
+            echo "### Released v${{ steps.version.outputs.version }}"
+            echo "- GitHub release: yes"
+            echo "- VS Code Marketplace: $([ -n "$VSCE_PAT" ] && echo yes || echo 'skipped (no VSCE_PAT secret)')"
+            echo "- Open VSX: $([ -n "$OVSX_PAT" ] && echo yes || echo 'skipped (no OVSX_PAT secret)')"
+          } >> "$GITHUB_STEP_SUMMARY"

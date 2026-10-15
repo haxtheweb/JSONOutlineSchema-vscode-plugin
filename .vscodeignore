@@ -1,0 +1,8 @@
+**
+!dist/extension.js
+!schemas/*.json
+!images/hax-icon.png
+!README.md
+!CHANGELOG.md
+!LICENSE
+!package.json

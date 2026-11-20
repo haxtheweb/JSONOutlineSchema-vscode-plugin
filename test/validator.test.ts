@@ -56,6 +56,21 @@ suite('outline validation', () => {
         assert.deepStrictEqual(codes(outline([item('a'), item('b', { parent: 'a', indent: 1 })])), []);
     });
 
+    test('slug starting with "/"', () => {
+        const findings = validateOutline(outline([item('a', { slug: '/a' })]));
+        assert.deepStrictEqual(findings.map((f) => f.code), [CODES.leadingSlashSlug]);
+        assert.strictEqual(findings[0].severity, 'warning');
+        assert.deepStrictEqual(codes(outline([item('a'), item('b', { parent: 'a', indent: 1, slug: 'a/b' })])), []);
+    });
+
+    test('top-level keys HAXcms drops', () => {
+        const text = JSON.stringify({ $schema: 'x', id: 's', title: 'S', slug: 'site', file: 'x.json', location: '', items: [item('a')] });
+        const findings = validateOutline(text);
+        assert.deepStrictEqual(findings.map((f) => f.code), [CODES.droppedTopLevelKey, CODES.droppedTopLevelKey]);
+        assert.deepStrictEqual(findings.map((f) => f.path), [['slug'], ['file']]);
+        assert.ok(findings.every((f) => f.severity === 'info'));
+    });
+
     test('metadata references', () => {
         assert.deepStrictEqual(codes(outline([item('a')], { site: { homePageId: 'x' } })), [CODES.unknownHomePage]);
         assert.deepStrictEqual(codes(outline([item('a')], { theme: { regions: { header: ['a', 'x'] } } })), [CODES.unknownRegionItem]);

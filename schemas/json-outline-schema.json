@@ -13,11 +13,11 @@
     "license": {
       "type": "string",
       "default": "by-sa",
-      "description": "License of the content. HAXcms uses Creative Commons short names.",
-      "examples": ["by", "by-sa", "by-nd", "by-nc", "by-nc-sa", "by-nc-nd", "cc0", "mit", "apache-2.0", "all-rights-reserved"]
+      "description": "License code, from the HAXcms license list (Creative Commons, public domain, software). HAXcms also reads common spellings such as \"CC BY-SA\" or SPDX ids and saves the code.",
+      "examples": ["by", "by-sa", "by-nd", "by-nc", "by-nc-sa", "by-nc-nd", "cc0", "pdm", "mit", "apache-2.0", "bsd-2-clause", "bsd-3-clause", "isc", "mpl-2.0", "gpl-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "unlicense", "all-rights-reserved"]
     },
     "location": { "type": ["string", "null"], "description": "Where the outline itself lives (set on site listings)." },
-    "slug": { "type": ["string", "null"] },
+    "slug": { "type": ["string", "null"], "description": "Not kept by HAXcms: it reads only id, title, author, description, license, metadata, location and items from site.json." },
     "metadata": { "$ref": "#/definitions/siteMetadata" },
     "items": {
       "type": "array",
@@ -83,7 +83,7 @@
     "itemId": {
       "type": "string",
       "minLength": 1,
-      "description": "An item id (HAXcms: \"item-\" + UUID)."
+      "description": "An item id (HAXcms: \"item-\" + UUID). Always a string: HAXcms turns a number such as 7 into \"7\" when it loads a site, and saving an outline with a number id is refused."
     },
     "item": {
       "type": "object",
@@ -129,7 +129,8 @@
         "updated": { "$ref": "#/definitions/timestamp" },
         "published": { "$ref": "#/definitions/looseBool", "description": "false hides the page from the published site." },
         "hideInMenu": { "$ref": "#/definitions/looseBool", "description": "Keep the page out of menus." },
-        "locked": { "$ref": "#/definitions/looseBool", "description": "Prevent editing." },
+        "hideTitle": { "$ref": "#/definitions/looseBool", "description": "Hide the page title (page-break hide title). Stored only while on; the title shows by default." },
+        "locked": { "$ref": "#/definitions/looseBool", "description": "Lock the page. The HAXcms API refuses every change to a locked page except unlocking it (423); an outline save can still move or delete it but keeps its title and content." },
         "status": { "type": "string" },
         "readtime": { "$ref": "#/definitions/looseInt", "description": "Estimated reading time in minutes (computed)." },
         "tags": {
@@ -180,7 +181,7 @@
             "domain": { "type": "string" },
             "logo": { "type": "string" },
             "lang": { "type": "string", "description": "Default language (BCP 47).", "examples": ["en", "es", "fr", "de", "zh", "ja"] },
-            "license": { "type": "string" },
+            "license": { "type": "string", "examples": ["by", "by-sa", "by-nd", "by-nc", "by-nc-sa", "by-nc-nd", "cc0", "pdm", "mit", "apache-2.0", "bsd-2-clause", "bsd-3-clause", "isc", "mpl-2.0", "gpl-2.0", "gpl-3.0", "lgpl-3.0", "agpl-3.0", "unlicense", "all-rights-reserved"] },
             "tags": { "type": "string" },
             "created": { "$ref": "#/definitions/timestamp" },
             "updated": { "$ref": "#/definitions/timestamp" },
@@ -233,11 +234,21 @@
           "type": "string",
           "description": "Theme element tag.",
           "examples": [
-            "clean-one", "clean-two", "clean-portfolio-theme", "polaris-flex-theme", "polaris-flex-sidebar",
-            "polaris-invent-theme", "polaris-theme", "journey-theme", "journey-sidebar-theme", "journey-topbar-theme",
-            "learn-two-theme", "haxor-slevin", "simple-blog", "outline-player", "bootstrap-theme", "chamfer-theme",
-            "collections-theme", "ddd-brochure-theme", "glossy-portfolio-theme", "haxcms-blank-theme", "haxma-theme",
-            "link-card-theme", "resume-theme", "spacebook-theme", "training-theme", "twenty-six-theme", "app-hax-theme"
+            "al-folio-theme", "app-hax-theme", "astro-cactus-theme", "astrofy-theme", "astropaper-theme",
+            "astrowind-theme", "book-theme", "bootstrap-theme", "carbon-theme", "chamfer-theme",
+            "chirpy-theme", "clean-one", "clean-portfolio-theme", "clean-two", "coder-theme",
+            "collections-theme", "ddd-brochure-theme", "ecosystem-theme", "fluent-theme",
+            "glossy-portfolio-theme", "guidebook-theme", "handbook-theme", "hax-marketing-theme",
+            "haxcms-blank-theme", "haxcms-json-theme", "haxcms-print-theme", "haxma-theme", "haxor-slevin",
+            "hyde-theme", "journey-sidebar-theme", "journey-theme", "journey-topbar-theme",
+            "just-the-docs-theme", "learn-two-theme", "link-card-theme", "manual-theme", "material-theme",
+            "minima-theme", "minimal-mistakes-theme", "outline-player", "papermod-theme", "patternfly-theme",
+            "polaris-flex-sidebar", "polaris-flex-theme", "polaris-invent-theme", "polaris-theme",
+            "primer-theme", "resume-theme", "shadcn-theme", "simple-blog", "spacebook-theme",
+            "spectrum-theme", "tailwind-theme", "terminal-theme", "terrible-best-themes",
+            "terrible-outlet-themes", "terrible-productionz-themes", "terrible-resume-themes",
+            "terrible-themes", "training-theme", "twenty-six-theme", "uswds-theme", "vhs-blog-theme",
+            "webawesome-theme", "writing-theme", "wysiwyg96-theme"
           ]
         },
         "path": { "type": "string", "description": "Module that defines the theme element." },

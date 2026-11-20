@@ -18,7 +18,17 @@ export const CODES = {
     unknownRegionItem: 'JOS107',
     unknownRelatedItem: 'JOS108',
     missingLocation: 'JOS109',
+    leadingSlashSlug: 'JOS110',
+    droppedTopLevelKey: 'JOS111',
 } as const;
+
+/**
+ * Top-level keys HAXcms reads from site.json (JSONOutlineSchema.TOP_LEVEL_KEYS
+ * in haxcms-nodejs and haxcms-php, plus items). Anything else is dropped the
+ * next time HAXcms saves the site. $schema is left alone: it is only there for
+ * editors.
+ */
+export const HAXCMS_TOP_LEVEL_KEYS = ['id', 'title', 'author', 'description', 'license', 'metadata', 'location', 'items'];
 
 export interface OutlineItem {
     index: number;
@@ -141,6 +151,12 @@ export function validateOutline(text: string, options: ValidateOptions = {}): Fi
             }
         }
 
+        if (item.slug !== undefined && item.slug.startsWith('/')) {
+            add(CODES.leadingSlashSlug, 'warning',
+                'Slug starts with "/". HAXcms still finds these pages but no longer writes such slugs; drop the leading "/".',
+                ip(item, 'slug'));
+        }
+
         if (item.parent && !outline.byId.has(item.parent)) {
             add(CODES.unknownParent, 'error', `Parent "${item.parent}" is not an item in this outline.`, ip(item, 'parent'));
             continue;
@@ -161,6 +177,13 @@ export function validateOutline(text: string, options: ValidateOptions = {}): Fi
             add(CODES.duplicateOrder, 'info', `order ${item.order} is shared with sibling "${sib.title}"; their menu position is ambiguous.`, ip(item, 'order'));
         } else {
             siblingOrder.set(key, item);
+        }
+    }
+
+    for (const key of Object.keys(value)) {
+        if (key !== '$schema' && !HAXCMS_TOP_LEVEL_KEYS.includes(key)) {
+            add(CODES.droppedTopLevelKey, 'info',
+                `HAXcms doesn't keep top-level "${key}"; it is dropped the next time HAXcms saves this site.`, [key]);
         }
     }
 

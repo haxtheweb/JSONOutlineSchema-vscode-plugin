@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # weekly, to catch HAXcms changes between releases of this extension
+    - cron: '23 9 * * 1'
 
 permissions:
   contents: read
@@ -26,3 +29,29 @@ jobs:
           name: vsix
           path: extension.vsix
           retention-days: 14
+
+  haxcms:
+    # Schema drift: compare theme, license and top-level key lists with
+    # haxtheweb/haxcms-nodejs main, and validate its boilerplate site.json.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: haxtheweb/haxcms-nodejs
+          ref: main
+          path: haxcms-nodejs
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/coreConfig/themes.json
+            /src/lib/licenses.json
+            /src/lib/JSONOutlineSchema.js
+            /src/boilerplate/site/site.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
+        env:
+          HAXCMS_NODEJS_DIR: ${{ github.workspace }}/haxcms-nodejs

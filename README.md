@@ -19,6 +19,8 @@ Editing support for [JSON Outline Schema](https://github.com/haxtheweb/webcompon
   | JOS107 | warning | A theme region lists an unknown item id |
   | JOS108 | warning | `relatedItems` lists an unknown item id |
   | JOS109 | warning | An item's `location` file doesn't exist |
+  | JOS110 | warning | `slug` starts with `/` (HAXcms no longer writes these) |
+  | JOS111 | info | Top-level key HAXcms doesn't keep (only `id`, `title`, `author`, `description`, `license`, `metadata`, `location`, `items`) |
 
 - **Navigation**: `location` values are links to the page file; Go to Definition (F12) on any item id in `parent`, `relatedItems`, `regions` or `homePageId` jumps to that item; hovering one shows its title and slug.
 - **JSON Outline Schema: Go to Item…** lists the outline as a tree, in menu order, and jumps to the item you pick.
@@ -40,6 +42,12 @@ npm install
 npm run check     # typecheck + lint + tests
 npm run build     # bundle to dist/extension.js
 npm run package   # build a .vsix
+```
+
+CI also checks out [haxtheweb/haxcms-nodejs](https://github.com/haxtheweb/haxcms-nodejs) main (on every PR and weekly) and fails when its themes, licenses or top-level site.json keys aren't reflected here, or its boilerplate `site.json` doesn't validate. To run that locally:
+
+```bash
+HAXCMS_NODEJS_DIR=../haxcms-nodejs npm test
 ```
 
 Press `F5` in VS Code to open the `examples/` site in an Extension Development Host; its `site.json` has a few deliberate mistakes.

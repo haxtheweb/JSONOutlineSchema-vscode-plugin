@@ -2,7 +2,7 @@
   "name": "json-outline-schema",
   "displayName": "JSON Outline Schema",
   "description": "Validation, autocomplete and navigation for JSON Outline Schema files, including HAXcms site.json",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "haxtheweb",
   "license": "Apache-2.0",
   "icon": "images/hax-icon.png",
@@ -56,7 +56,11 @@
         },
         "jsonOutlineSchema.checkLocations": {
           "type": "string",
-          "enum": ["auto", "always", "never"],
+          "enum": [
+            "auto",
+            "always",
+            "never"
+          ],
           "enumDescriptions": [
             "Only when a pages/ folder sits next to the outline (a full HAXcms site).",
             "Always report items whose location file is missing.",
